@@ -22,5 +22,10 @@ pip install -r requirements.txt
 python src/genome-assembly/main.py --reads <read-file_path> --target <output-file-path>
 ```
 
-2. Measure the Blast score
+2. Visualize the generated contigs
+```sh
+python src/visualization/visualize_contigs.py --file <contigs-file-path>
+```
+
+3. Measure the Blast score
 Coming soon...
