@@ -24,6 +24,33 @@ parser.add_argument(
     action="store_true",
     help="Plot DeBruijn graph",
 )
+parser.add_argument(
+    "--splits",
+    type=int,
+    default = 0,
+    help="Minimum number of splits per read",
+)
+parser.add_argument(
+    "--reverse-complement",
+    default = False,
+    action="store_true",
+    help="Whether to use the reverse complement of the reads",
+)
+
+def write_output(contigs: list[str], args: argparse.Namespace):
+    def contig_to_string(contig: str, i: int, fasta: bool) -> str:
+        return f">Contig {i}\n{contig}\n" if fasta else f"{contig}\n"
+
+    output_is_fasta = args.target is None or args.target.split(".")[-1] == "fasta"
+
+    output = "".join(contig_to_string(contig, i, output_is_fasta) for i, contig in enumerate(contigs))
+    print(f"Contig number: {len(contigs)}")
+    print(f"Total contig length: {sum(len(contig) for contig in contigs)}")
+    if(args.target is None):
+        print(output)
+    else:
+        file_io.write_to_file(args.target, output)
+        print(f"Output written to {args.target}")
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -31,17 +58,10 @@ if __name__ == "__main__":
     reads = file_io.read_file_content(args.reads).strip().splitlines()
     max_read_length = max(len(read) for read in reads)
 
-    graph = DeBruijnGraph.DeBruijnGraph(reads)
+    graph = DeBruijnGraph.DeBruijnGraph(reads, args.splits, args.reverse_complement)
     contigs = [path for path in graph.get_maximum_non_branching_paths() if len(path) > max_read_length]
 
-    output = "".join(f">Contig {i}\n{contig}\n" for (i, contig) in enumerate(contigs))
-    if(args.target is None):
-        print(output)
-    else:
-        print(f"Contig number: {len(contigs)}")
-        print(f"Total contig length: {sum(len(contig) for contig in contigs)}")
-        file_io.write_to_file(args.target, output)
-        print(f"Output written to {args.target}")
+    write_output(contigs, args)
 
     if(args.plot):
         graph.plot()
