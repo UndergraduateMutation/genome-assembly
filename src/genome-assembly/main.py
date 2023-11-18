@@ -1,7 +1,7 @@
 import argparse
-
 import DeBruijnGraph
 import file_io
+import time
 
 parser = argparse.ArgumentParser(
     description="Assemble genome reads into contigs",
@@ -58,10 +58,17 @@ if __name__ == "__main__":
     reads = file_io.read_file_content(args.reads).strip().splitlines()
     max_read_length = max(len(read) for read in reads)
 
+    start_time = time.time()
+
     graph = DeBruijnGraph.DeBruijnGraph(reads, args.splits, args.reverse_complement)
     contigs = [path for path in graph.get_maximum_non_branching_paths() if len(path) > max_read_length]
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
     write_output(contigs, args)
+
+    print(f"Job took {elapsed_time} seconds.")
 
     if(args.plot):
         graph.plot()

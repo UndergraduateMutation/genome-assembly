@@ -32,24 +32,28 @@ class DeBruijnGraph():
         self.graph.add_edges(edges)
     
     def get_maximum_non_branching_paths(self) -> list[str]:
-        def vertex_is_branching(vertex: ig.Vertex) -> bool:
-            return vertex.indegree() != 1 or vertex.outdegree() != 1
-        
+        def dfs(vertex: ig.Vertex, path: list[ig.Vertex]) -> list[ig.Vertex]:
+            while vertex.outdegree() == 1:
+                path.append(vertex)
+                vertex = vertex.successors()[0]
+                marked.add(vertex.index)
+
+            path.append(vertex)
+            return path
+
         def assemble_path(path: list[ig.Vertex]) -> str:
             return path[0]["name"] + "".join([vertex["name"][-1] for vertex in path[1:]])
+        
+        def vertex_is_branching(vertex: ig.Vertex) -> bool:
+            return vertex.indegree() != 1 or vertex.outdegree() != 1
 
         paths: list[list[ig.Vertex]] = []
+        marked = set()
+
         for vertex in self.graph.vs:
-            if (vertex_is_branching(vertex)):
-                for edge in self.graph.es.select(_source=vertex.index):
-                    path: list[ig.Vertex] = [vertex]
-                    while True:
-                        path.append(self.graph.vs[edge.target_vertex.index])
-                        if self.graph.vs[edge.target_vertex.index].outdegree() == 1:
-                            edge = self.graph.es.select(_source=edge.target_vertex.index)[0]
-                        else:
-                            break
-                    paths.append(path)
+            if vertex.index not in marked and vertex_is_branching(vertex):
+                path = dfs(vertex, [])
+                paths.append(path)
 
         return [assemble_path(path) for path in paths]
     
