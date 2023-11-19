@@ -54,11 +54,15 @@ def write_output(contigs: list[str], args: argparse.Namespace):
         file_io.write_to_file(args.target, output)
         print(f"Output written to {args.target}")
 
+def reorder_contig(contig: str) -> str:
+    reverse_complement = DeBruijnGraph.reverse_complement(contig)
+    return reverse_complement if reverse_complement < contig else contig
+
 def filter_paths(max_nb_paths: list[str], reads: list[str]) -> list[str]:
     max_read_length = max(len(read) for read in reads)
-    return [path for path in max_nb_paths if len(path) > max_read_length]
+    return list({reorder_contig(path) for path in max_nb_paths if len(path) > max_read_length})
 
-def main(args: argparse.Namespace) -> list[str]:
+def main(args: argparse.Namespace):
     reads = file_io.read_file_content(args.reads).strip().splitlines()
 
     graph = DeBruijnGraph.DeBruijnGraph(reads, args.splits, args.reverse_complement)
