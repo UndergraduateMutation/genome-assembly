@@ -27,15 +27,20 @@ For more information about plotting the graph and other parameters, run:
 python src/genome-assembly/main.py --help
 ```
 
-2. Visualize length distribution of the generated contigs
+2. Assemble contigs from the reads using multiple split values and select the best one (grid search on one parameter):
+```sh
+python src/genome-assembly/optimize_splits.py --reads <read-file-path> --target <output-file-path> [-c] [--search-space <space-separated list of integers>] [-k <Nk metric parameter>]
+```
+
+3. Visualize length distribution of the generated contigs
 ```sh
 python src/visualization/visualize_contigs.py --file <contigs-file-path>
 ```
 
-3. Measure the Blast score
+4. Measure the Blast score
 Use the [NCBI](https://blast.ncbi.nlm.nih.gov/Blast.cgi) website or the blast command line tool
 
-4. Generate reads from a genome
+5. Generate reads from a genome
 ```sh
 python src/data-generation/main.py -g <genome-file-path> -t <output-file-path> -r <read-size> -e <error-probability>
 ```

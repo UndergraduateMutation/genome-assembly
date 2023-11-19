@@ -62,7 +62,7 @@ def filter_paths(max_nb_paths: list[str], reads: list[str]) -> list[str]:
     max_read_length = max(len(read) for read in reads)
     return list({reorder_contig(path) for path in max_nb_paths if len(path) > max_read_length})
 
-def main(args: argparse.Namespace):
+def main(args: argparse.Namespace, output: bool) -> list[str]:
     reads = file_io.read_file_content(args.reads).strip().splitlines()
 
     if(args.splits == -1):
@@ -74,7 +74,8 @@ def main(args: argparse.Namespace):
 
     contigs = filter_paths(max_nbpaths, reads)
 
-    write_output(contigs, args)
+    if output:
+        write_output(contigs, args)
 
     if args.plot:
         graph.plot()
@@ -83,5 +84,4 @@ def main(args: argparse.Namespace):
 if __name__ == "__main__":
     arguments = parser.parse_args()
 
-    main(arguments)
-    
+    main(arguments, True)
