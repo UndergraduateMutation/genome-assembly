@@ -26,12 +26,14 @@ parser.add_argument(
 )
 parser.add_argument(
     "--splits",
+    "-s",
     type=int,
     default = 0,
     help="Minimum number of splits per read",
 )
 parser.add_argument(
     "--reverse-complement",
+    "-c",
     default = False,
     action="store_true",
     help="Whether to use the reverse complement of the reads",
@@ -39,7 +41,7 @@ parser.add_argument(
 
 def write_output(contigs: list[str], args: argparse.Namespace):
     def contig_to_string(contig: str, i: int, fasta: bool) -> str:
-        return f">Contig {i}\n{contig}\n" if fasta else f"{contig}\n"
+        return f">Contig_{i}\n{contig}\n" if fasta else f"{contig}\n"
 
     output_is_fasta = args.target is None or args.target.split(".")[-1] == "fasta"
 
@@ -52,16 +54,25 @@ def write_output(contigs: list[str], args: argparse.Namespace):
         file_io.write_to_file(args.target, output)
         print(f"Output written to {args.target}")
 
-if __name__ == "__main__":
-    args = parser.parse_args()
-
-    reads = file_io.read_file_content(args.reads).strip().splitlines()
+def filter_paths(max_nb_paths: list[str], reads: list[str]) -> list[str]:
     max_read_length = max(len(read) for read in reads)
+    return [path for path in max_nb_paths if len(path) > max_read_length]
+
+def main(args: argparse.Namespace) -> list[str]:
+    reads = file_io.read_file_content(args.reads).strip().splitlines()
 
     graph = DeBruijnGraph.DeBruijnGraph(reads, args.splits, args.reverse_complement)
-    contigs = [path for path in graph.get_maximum_non_branching_paths() if len(path) > max_read_length]
+
+    max_nbpaths = graph.get_maximum_non_branching_paths()
+
+    contigs = filter_paths(max_nbpaths, reads)
 
     write_output(contigs, args)
 
-    if(args.plot):
+    if args.plot:
         graph.plot()
+
+if __name__ == "__main__":
+    arguments = parser.parse_args()
+    main(arguments)
+    

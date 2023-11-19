@@ -5,17 +5,17 @@ def reverse_complement(read: str) -> str:
     complement = {"a": "t", "t": "a", "c": "g", "g": "c", "A": "T", "T": "A", "C": "G", "G": "C"}
     return "".join(complement[base] for base in read[::-1])
 
-def split_reads(reads: list[str], k: int) -> list[str]:
+def split_reads(reads: list[str], target_size: int) -> list[str]:
     new_reads = []
     for read in reads:
-        for i in range(len(read) - k + 1):
-            new_reads.append(read[i:i+k])
+        for i in range(len(read) - target_size + 1):
+            new_reads.append(read[i:i+target_size])
     return new_reads
 
 def preprocess_reads(reads: list[str], splits_per_read: int, use_reverse_complement: bool) -> list[str]:
-    if(use_reverse_complement):
+    if use_reverse_complement:
         reads += list(map(reverse_complement, reads))
-    reads = split_reads(reads, splits_per_read)
+    reads = split_reads(reads, min(len(read) for read in reads) - splits_per_read)
     return reads
 
 class DeBruijnGraph():
@@ -23,14 +23,13 @@ class DeBruijnGraph():
         self.graph = ig.Graph(directed=True)
 
         reads = preprocess_reads(input_reads, splits_per_read, use_reverse_complement)
-        reads = split_reads(input_reads, min(len(read) for read in input_reads) - splits_per_read)
 
         suffix_vertices = set(read[1:] for read in reads)
         prefix_vertices = set(read[:-1] for read in reads)
         edges = ((read[:len(read) - 1], read[1:]) for read in reads)
         self.graph.add_vertices(list(prefix_vertices | suffix_vertices))
-        self.graph.add_edges(edges)
-    
+        self.graph.add_edges(set(edges))
+
     def get_maximum_non_branching_paths(self) -> list[str]:
         def vertex_is_branching(vertex: ig.Vertex) -> bool:
             return vertex.indegree() != 1 or vertex.outdegree() != 1
@@ -52,7 +51,7 @@ class DeBruijnGraph():
                     paths.append(path)
 
         return [assemble_path(path) for path in paths]
-    
+
     def plot(self):
         self.graph.vs["label"] = self.graph.vs["name"]
         ax = plt.subplot()
