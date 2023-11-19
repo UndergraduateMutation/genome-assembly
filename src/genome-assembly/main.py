@@ -28,15 +28,15 @@ parser.add_argument(
     "--splits",
     "-s",
     type=int,
-    default = 0,
-    help="Minimum number of splits per read",
+    default = -1,
+    help="Minimum number of splits per read, default to 5 percent of the read size",
 )
 parser.add_argument(
     "--reverse-complement",
     "-c",
     default = False,
     action="store_true",
-    help="Whether to use the reverse complement of the reads",
+    help="Whether to use the reverse complements of the reads",
 )
 
 def write_output(contigs: list[str], args: argparse.Namespace):
@@ -65,6 +65,9 @@ def filter_paths(max_nb_paths: list[str], reads: list[str]) -> list[str]:
 def main(args: argparse.Namespace):
     reads = file_io.read_file_content(args.reads).strip().splitlines()
 
+    if(args.splits == -1):
+        args.splits = int(min(len(read) for read in reads) * 0.05)
+
     graph = DeBruijnGraph.DeBruijnGraph(reads, args.splits, args.reverse_complement)
 
     max_nbpaths = graph.get_maximum_non_branching_paths()
@@ -75,8 +78,10 @@ def main(args: argparse.Namespace):
 
     if args.plot:
         graph.plot()
+    return contigs
 
 if __name__ == "__main__":
     arguments = parser.parse_args()
+
     main(arguments)
     
