@@ -35,6 +35,13 @@ parser.add_argument(
     help="Error probability",
 )
 parser.add_argument(
+    "-m",
+    "--missing-read-probability",
+    type=float,
+    default=0.0,
+    help="Missing read probability",
+)
+parser.add_argument(
     "-c",
     "--reverse-complement",
     action="store_true",
@@ -52,17 +59,18 @@ def generate_read(read: str, error_probability: float, reverse_complement: bool)
             read = read[:j] + random.choice("acgt") + read[j+1:]
     return read if not reverse_complement or random.random() < 0.5 else get_reverse_complement(read)
 
-def generate_reads(sequence: str, read_size: int, error_probability: float, reverse_complement: bool) -> list[str]:
+def generate_reads(sequence: str, read_size: int, error_probability: float, missing_read_probability: float, reverse_complement: bool) -> list[str]:
     sequence_length = len(sequence)
     num_reads = int(sequence_length - read_size + 1)
-    reads = [generate_read(sequence[i:i+read_size], error_probability, reverse_complement) for i in range(num_reads)]
+    print(missing_read_probability)
+    reads = [generate_read(sequence[i:i+read_size], error_probability, reverse_complement) for i in range(num_reads) if random.random() > missing_read_probability]
     return reads
 
 if __name__ == "__main__":
     args = parser.parse_args()
     reference_genome = file_io.read_file_content(args.sequence).replace("\n", "").strip()
 
-    generated_reads = generate_reads(reference_genome, args.read_size, args.error_probability, args.reverse_complement)
+    generated_reads = generate_reads(reference_genome, args.read_size, args.error_probability, args.missing_read_probability, args.reverse_complement)
 
     file_io.write_to_file(args.target, "\n".join(generated_reads))
     print(f"Output written to {args.target}")
